@@ -27,23 +27,13 @@ class RLController(SumoEnv):
         self.green_time_actions_sec = np.array(
             [10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0]
         )
-        self.vsl_speed_actions_mps = np.array([13.89, 16.67, 19.44, 22.22, 25.0, 27.78])
+        self.vsl_speed_actions_mps = np.array([13.89, 20.83, 27.77])
         self.action_space_n = len(self.green_time_actions_sec) * len(
             self.vsl_speed_actions_mps
-        )  # 42
+        )  # 21
 
         self.green_phase_index = 0
         self.red_phase_index = 1
-
-        self.upstream_mainline_all_detector_ids = self.get_edge_induction_loops(
-            self.UPSTREAM_EDGE
-        )
-        self.bottleneck_edge_all_detector_ids = self.get_edge_induction_loops(
-            self.MERGING_EDGE
-        )
-        self.downstream_mainline_all_detector_ids = self.get_edge_induction_loops(
-            self.DOWNSTREAM_EDGE
-        )
 
         self.upstream_detector_ids_state = [
             "up_stream_sens_0",
@@ -56,7 +46,11 @@ class RLController(SumoEnv):
             "bottle_neck_sens_2",
             "bottle_neck_sens_3",
         ]
-        self.outflow_detector_ids_reward = self.downstream_mainline_all_detector_ids
+        self.outflow_detector_ids_reward = [
+            "outflow_sens_0",
+            "outflow_sens_1",
+            "outflow_sens_2",
+        ]
         self.ramp_queue_detector_id = "queue_sens"
 
         # Macro-only state: 15 features (14 macro + last green + last VSL speed). No micro grid.
@@ -211,23 +205,23 @@ class RLController(SumoEnv):
         )
 
         self.processed_flow_lane_0_merging_vph = self.get_loops_flow_interval(
-            [self.bottleneck_detector_ids_state[0]], self.CYCLE_DURATION_SEC
+            [self.bottleneck_detector_ids_state[1]], self.CYCLE_DURATION_SEC
         )
         self.processed_occ_lane_0_bottleneck_percent = (
-            self.get_loops_occupancy_interval([self.bottleneck_detector_ids_state[0]])
+            self.get_loops_occupancy_interval([self.bottleneck_detector_ids_state[1]])
         )
         self.processed_speed_lane_0_bottleneck_mps = self.get_loops_mean_speed_interval(
-            [self.bottleneck_detector_ids_state[0]]
+            [self.bottleneck_detector_ids_state[1]]
         )
 
         self.processed_flow_lane_0_upstream_vph = self.get_loops_flow_interval(
-            [self.upstream_detector_ids_state[1]], self.CYCLE_DURATION_SEC
+            [self.upstream_detector_ids_state[0]], self.CYCLE_DURATION_SEC
         )
         self.processed_occ_lane_0_upstream_percent = self.get_loops_occupancy_interval(
-            [self.upstream_detector_ids_state[1]]
+            [self.upstream_detector_ids_state[0]]
         )
         self.processed_speed_lane_0_upstream_mps = self.get_loops_mean_speed_interval(
-            [self.upstream_detector_ids_state[1]]
+            [self.upstream_detector_ids_state[0]]
         )
 
     def reset(self):

@@ -10,14 +10,20 @@ class RLController(SumoEnv):
         self.CYCLE_DURATION_SEC = 40.0
         self.ty = 3
 
-        self.green_time_actions_sec = np.array([5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0])
+        self.green_time_actions_sec = np.array(
+            [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0]
+        )
         self.action_space_n = len(self.green_time_actions_sec)
 
         self.green_phase_index = 0
         self.red_phase_index = 1
 
-        self.upstream_mainline_all_detector_ids = self.get_edge_induction_loops(self.UPSTREAM_EDGE)
-        self.bottleneck_edge_all_detector_ids = self.get_edge_induction_loops(self.MERGING_EDGE)
+        self.upstream_mainline_all_detector_ids = self.get_edge_induction_loops(
+            self.UPSTREAM_EDGE
+        )
+        self.bottleneck_edge_all_detector_ids = self.get_edge_induction_loops(
+            self.MERGING_EDGE
+        )
         self.downstream_mainline_all_detector_ids = self.get_edge_induction_loops(
             self.DOWNSTREAM_EDGE
         )
@@ -133,22 +139,26 @@ class RLController(SumoEnv):
         self.processed_speed_bottleneck_mps = self.get_loops_flow_weigthed_mean_speed(
             self.bottleneck_detector_ids_state
         )
-        self.processed_mainline_speed_downstream_mps = self.get_loops_flow_weigthed_mean_speed(
-            self.outflow_detector_ids_reward
+        self.processed_mainline_speed_downstream_mps = (
+            self.get_loops_flow_weigthed_mean_speed(self.outflow_detector_ids_reward)
         )
 
         self.processed_ramp_queue_veh = (
-            self.sum_queue / self.CYCLE_DURATION_SEC if self.CYCLE_DURATION_SEC > 0 else 0.0
+            self.sum_queue / self.CYCLE_DURATION_SEC
+            if self.CYCLE_DURATION_SEC > 0
+            else 0.0
         )
 
         self.processed_flow_lane_0_merging_vph = self.get_loops_flow_interval(
             [self.bottleneck_detector_ids_state[0]], self.CYCLE_DURATION_SEC
         )
-        self.processed_occ_lane_0_bottleneck_percent = self.get_loops_occupancy_interval(
-            [self.bottleneck_detector_ids_state[0]]
+        self.processed_occ_lane_0_bottleneck_percent = (
+            self.get_loops_occupancy_interval([self.bottleneck_detector_ids_state[0]])
         )
-        self.processed_speed_lane_0_bottleneck_mps = self.get_loops_flow_weigthed_mean_speed(
-            [self.bottleneck_detector_ids_state[0]]
+        self.processed_speed_lane_0_bottleneck_mps = (
+            self.get_loops_flow_weigthed_mean_speed(
+                [self.bottleneck_detector_ids_state[0]]
+            )
         )
 
         self.processed_flow_lane_0_upstream_vph = self.get_loops_flow_interval(
@@ -157,8 +167,10 @@ class RLController(SumoEnv):
         self.processed_occ_lane_0_upstream_percent = self.get_loops_occupancy_interval(
             [self.upstream_detector_ids_state[1]]
         )
-        self.processed_speed_lane_0_upstream_mps = self.get_loops_flow_weigthed_mean_speed(
-            [self.upstream_detector_ids_state[1]]
+        self.processed_speed_lane_0_upstream_mps = (
+            self.get_loops_flow_weigthed_mean_speed(
+                [self.upstream_detector_ids_state[1]]
+            )
         )
 
     def reset(self):
@@ -227,11 +239,17 @@ class RLController(SumoEnv):
 
         self._reset_cycle_aggregators()
 
-        if self.ramp_meter_id and self.green_phase_index != -1 and chosen_green_time_sec > 0:
+        if (
+            self.ramp_meter_id
+            and self.green_phase_index != -1
+            and chosen_green_time_sec > 0
+        ):
             self.set_phase(self.ramp_meter_id, self.green_phase_index)
             self.set_phase_duration(self.ramp_meter_id, chosen_green_time_sec)
             if self.sim_step_length > 0:
-                num_steps_green = int(round(chosen_green_time_sec / self.sim_step_length))
+                num_steps_green = int(
+                    round(chosen_green_time_sec / self.sim_step_length)
+                )
             else:
                 num_steps_green = 0
 
@@ -239,7 +257,9 @@ class RLController(SumoEnv):
                 if self.is_simulation_end():
                     break
                 self.simulation_step()
-                self.sum_queue += self.get_edge_ls_queue_length_vehicles(self.ON_RAMP_EDGE)
+                self.sum_queue += self.get_edge_ls_queue_length_vehicles(
+                    self.ON_RAMP_EDGE
+                )
 
         if self.ramp_meter_id and self.red_phase_index != -1 and red_time_sec > 0:
             self.set_phase(self.ramp_meter_id, self.red_phase_index)
@@ -253,13 +273,17 @@ class RLController(SumoEnv):
                 if self.is_simulation_end():
                     break
                 self.simulation_step()
-                self.sum_queue += self.get_edge_ls_queue_length_vehicles(self.ON_RAMP_EDGE)
+                self.sum_queue += self.get_edge_ls_queue_length_vehicles(
+                    self.ON_RAMP_EDGE
+                )
 
         self._collect_data_at_cycle_end()
 
         new_observation = self._get_current_observation()
         reward = self._calculate_reward()
-        is_done = self.is_simulation_end() or self.get_current_time() >= self.args["steps"]
+        is_done = (
+            self.is_simulation_end() or self.get_current_time() >= self.args["steps"]
+        )
 
         current_phase_index = -1
         current_ryg_state = "N/A"
@@ -486,7 +510,9 @@ class RLController(SumoEnv):
             denominator = self.MAX_RAMP_QUEUE_VEH - spillback_threshold_veh
             if denominator < 1e-6:
                 denominator = 1e-6
-            spill_amount = (self.processed_ramp_queue_veh - spillback_threshold_veh) / denominator
+            spill_amount = (
+                self.processed_ramp_queue_veh - spillback_threshold_veh
+            ) / denominator
             return -1.0 * np.clip(spill_amount, 0, 1)
 
         return 0.0

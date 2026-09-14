@@ -17,7 +17,7 @@ class BaselineMeta(SumoEnv):
             "bottle_neck_sens_2",
             "bottle_neck_sens_3",
         ]
-        self.ds_loops = self.get_edge_induction_loops(self.DOWNSTREAM_EDGE)
+        self.ds_loops = ["outflow_sens_0", "outflow_sens_1", "outflow_sens_2"]
 
         self.ramp_meter_id = None
         self.green_phase_index = 0

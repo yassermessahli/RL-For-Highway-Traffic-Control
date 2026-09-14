@@ -30,9 +30,7 @@ class Observe(View):
         super().__init__(
             type(self).__name__.upper(),
             make_env(
-                env=CustomEnvWrapper(
-                    CustomEnv("observe", gui_override=gui_override)
-                ),
+                env=CustomEnvWrapper(CustomEnv("observe", gui_override=gui_override)),
                 max_episode_steps=args.max_s,
             ),
         )
@@ -75,7 +73,9 @@ class Observe(View):
         """Resets environment for new observation episode."""
         self.obs = self.env.reset()
         self.ep_green_times = []
-        self.ep_lane_closed_count = 0
+        self.vsl_actions = dict.fromkeys(
+            self.env.custom_env.sumo_env.vsl_speed_actions_mps, 0
+        )
         self.ep_rewards = []
 
     def close(self):
@@ -98,8 +98,8 @@ class Observe(View):
         # Accumulate stats
         if "chosen_green_time_sec" in info:
             self.ep_green_times.append(info["chosen_green_time_sec"])
-        if info.get("lane_closed", 0) == 1:
-            self.ep_lane_closed_count += 1
+        if "chosen_vsl_speed_mps" in info:
+            self.vsl_actions[info["chosen_vsl_speed_mps"]] += 1
 
         # 'reward' here might be None from step, but it's typically a float.
         # Alternatively we can use info.get("reward", 0.0) if it's there.
@@ -122,7 +122,7 @@ class Observe(View):
             print("\n--- Episode Statistics ---")
             avg_green = np.mean(self.ep_green_times) if self.ep_green_times else 0.0
             print(f"Average Green Time: {avg_green:.2f} sec")
-            print(f"Lane Closed Count: {self.ep_lane_closed_count} times")
+            print(f"VSL Actions: {self.vsl_actions}")
             total_reward = info.get(
                 "r", np.sum(self.ep_rewards)
             )  # Use accumulated episode reward from Monitor if available
