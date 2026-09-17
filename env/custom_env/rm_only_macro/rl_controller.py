@@ -91,7 +91,6 @@ class RLController(SumoEnv):
             "reward_throughput_comp": 0.0,
             "penalty_ramp_queue_comp": 0.0,
             "penalty_bottleneck_occ_comp": 0.0,
-            "penalty_spillback_comp": 0.0,
             "sim_time": 0.0,
             "episode": 0,
             "total_running_vehicles": 0,
@@ -312,7 +311,6 @@ class RLController(SumoEnv):
             "reward_throughput_comp": self._reward_throughput(),
             "penalty_ramp_queue_comp": self._penalty_ramp_queue(),
             "penalty_bottleneck_occ_comp": self._penalty_bottleneck_occ(),
-            "penalty_spillback_comp": self._penalty_spillback(),
         }
 
         info_for_this_step.update(super().log_info())
@@ -488,47 +486,35 @@ class RLController(SumoEnv):
             0,
             1,
         )
-        return -1.0 * norm_queue
-
-    def _penalty_spillback(self):
-        spillback_threshold_veh = 0.9 * self.MAX_RAMP_QUEUE_VEH
-        if self.processed_ramp_queue_veh > spillback_threshold_veh:
-            denominator = self.MAX_RAMP_QUEUE_VEH - spillback_threshold_veh
-            if denominator < 1e-6:
-                denominator = 1e-6
-            spill_amount = (
-                self.processed_ramp_queue_veh - spillback_threshold_veh
-            ) / denominator
-            return -1.0 * np.clip(spill_amount, 0, 1)
-        return 0.0
+        return -1.0 * (norm_queue ** 2)
 
     def _calculate_reward(self):
         w_speed_merge = 1.5
         w_speed_up = 1.0
         w_speed_down = 0.5
+        w_throughput = 0.5
 
         w_occ_bottle = 2.0
         w_occ_upstream = 1.0
-        w_queue = 5.0
-        w_spillback = 20.0
+        w_queue = 3.0
 
         r_speed_merge = self._reward_merging_speed()
         r_speed_up = self._reward_upstream_speed()
         r_speed_down = self._reward_outflow_speed()
+        r_throughput = self._reward_throughput()
 
         p_occ_bottle = self._penalty_bottleneck_occ()
         p_occ_upstream = self._penalty_upstream_occ()
         p_queue = self._penalty_ramp_queue()
-        p_spillback = self._penalty_spillback()
 
         reward = (
             (w_speed_merge * r_speed_merge)
             + (w_speed_up * r_speed_up)
             + (w_speed_down * r_speed_down)
+            + (w_throughput * r_throughput)
             + (w_occ_bottle * p_occ_bottle)
             + (w_occ_upstream * p_occ_upstream)
             + (w_queue * p_queue)
-            + (w_spillback * p_spillback)
         )
         return float(reward)
 

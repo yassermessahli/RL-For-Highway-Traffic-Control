@@ -74,7 +74,7 @@ class Observe(View):
         self.obs = self.env.reset()
         self.ep_green_times = []
         self.vsl_actions = dict.fromkeys(
-            self.env.custom_env.sumo_env.vsl_speed_actions_mps, 0
+            getattr(self.env.custom_env.sumo_env, "vsl_speed_actions_mps", []), 0
         )
         self.ep_rewards = []
 
