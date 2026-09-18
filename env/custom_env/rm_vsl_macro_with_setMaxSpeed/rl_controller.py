@@ -591,8 +591,8 @@ class RLController(SumoEnv):
         w_speed_down = 0.5
         w_occ_bottle = 2.0
         w_occ_upstream = 1.0
-        w_queue = 1.0
-        w_spillback = 20.0
+        w_queue = 3.0
+        w_spillback = 5.0
 
         # reward components
         r_speed_merge = self._reward_merging_speed()

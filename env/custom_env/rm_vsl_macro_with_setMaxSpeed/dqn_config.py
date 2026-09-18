@@ -14,7 +14,7 @@ MAX_AGENT_STEPS_PER_EPISODE = int(
 
 # Variant tag is appended to save/log dirs so this experiment does not
 # collide with the prior variants' checkpoints/logs.
-VARIANT_TAG = "joint_rm_vsl_42"
+VARIANT_TAG = "joint_rm_vsl_21_kaggle"
 
 HYPER_PARAMS = {
     "gpu": "0",
